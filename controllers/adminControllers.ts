@@ -1,6 +1,8 @@
 import { Response, Request, NextFunction } from "express";
 import { CreateVendor as CreateVendorType } from "../types";
 import { Vendor } from "../models";
+import { encryptPassword } from "../utils";
+import mongoose from "mongoose";
 
 export const CreateVendor = async (
   req: Request,
@@ -28,6 +30,7 @@ export const CreateVendor = async (
         vendor: existingVendor,
       });
     }
+
     const vendor = await Vendor.create({
       name,
       ownerName,
@@ -36,12 +39,13 @@ export const CreateVendor = async (
       address,
       phone,
       email,
-      password,
-      salt: "some salt",
+      password: (await encryptPassword(password)).encryptedPassword,
+      salt: (await encryptPassword(password)).salt,
       serviceAvailable: false,
       coverImages: [],
       rating: 0,
     });
+
     return res.status(201).json({
       message: "Vendor created successfully",
       vendor,
@@ -53,17 +57,47 @@ export const CreateVendor = async (
   }
 };
 
-export const getVendors = (
+export const getVendors = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+): Promise<Response | any> => {
+  try {
+    const vendors = await Vendor.find();
+    return res.status(200).json(vendors);
+  } catch (error) {
+    console.log(error);
+    next(error);
+    return;
+  }
+};
 
-export const getVendorById = (
+export const getVendorById = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
-  console.log(req.params.id);
-  res.send(`Vendor ID: ${req.params.id}`);
+): Promise<Response | any> => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(404)
+        .json({ vendor: null, message: "Vendor not found" });
+    }
+
+    const vendor = await Vendor.findById(id);
+
+    if (!vendor) {
+      return res
+        .status(404)
+        .json({ vendor: null, message: "Vendor not found" });
+    }
+
+    return res.status(200).json(vendor);
+  } catch (error) {
+    console.log(error);
+    next(error);
+    return;
+  }
 };

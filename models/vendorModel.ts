@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-interface IVendor extends Document {
+export interface IVendor extends Document {
   name: string;
   ownerName: string;
   email: string;
@@ -34,5 +34,14 @@ const VendorSchema = new Schema<IVendor>(
   },
   { timestamps: true }
 );
+
+VendorSchema.set("toJSON", {
+  transform: (doc, ret) => {
+    delete ret.password;
+    delete ret.salt;
+    delete ret.pincode;
+    return ret;
+  },
+});
 
 export const Vendor = mongoose.model<IVendor>("Vendor", VendorSchema);
