@@ -1,12 +1,36 @@
-import express, { Response, Request, NextFunction, Router } from "express";
-import { VendorLogin } from "../controllers";
+import { Router } from "express";
+import {
+  addVendorFood,
+  editVendorProfile,
+  editVendorService,
+  getVendorFood,
+  getVendorProfile,
+  vendorLogin,
+} from "../controllers";
+import { Authenticate } from "../middleware";
 
 const router = Router();
 
-router.post("/login", VendorLogin);
+//AUTHENTICATION
+//Login
+router.post("/login", vendorLogin);
 
-router.get("/", (req: Request, res: Response, next: NextFunction) => {
-  res.send("Vendor Route");
-});
+// Authenticate vendor
+router.use(Authenticate);
+
+// PROFILE
+// View vendor Profile route
+router.get("/profile", getVendorProfile);
+
+// Edit vendor profile route
+router.patch("/profile", editVendorProfile);
+
+// Edit vendor service route
+router.patch("/service", editVendorService);
+
+// FOOD
+// food vendor route
+router.get("/food", getVendorFood);
+router.post("/food", addVendorFood);
 
 export { router as VendorRouter };

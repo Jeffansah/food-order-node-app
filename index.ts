@@ -1,6 +1,7 @@
 import express from "express";
 import { AdminRouter, VendorRouter } from "./routes";
 import { connectToDatabase } from "./mongo";
+import cookieParser from "cookie-parser";
 
 // App Initialization
 const app = express();
@@ -8,6 +9,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Routes
 app.use("/admin", AdminRouter);
