@@ -3,6 +3,7 @@ import { Vendor } from "../models";
 import { decryptPassword } from "../utils/decryptPassword";
 import { EditVendorProfile, LoginVendor } from "../types";
 import { generateToken } from "../utils/generateToken";
+import { Food } from "../models/foodModel";
 
 export const vendorLogin = async (
   req: Request,
@@ -117,6 +118,44 @@ export const editVendorProfile = async (
   }
 };
 
+export const updateVendorCoverImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | any> => {
+  const user = req.user;
+
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const vendor = await Vendor.findById(user._id);
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    const files = req.files as Express.Multer.File[];
+
+    const coverImages = files.map((file: Express.Multer.File) => file.filename);
+
+    vendor.coverImages.push(...coverImages);
+
+    const updatedVendor = await vendor.save();
+
+    res.status(200).json({
+      message: "Vendor cover images updated successfully",
+      vendor: updatedVendor,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error updating vendor cover image", error });
+  }
+};
+
 export const editVendorService = async (
   req: Request,
   res: Response,
@@ -149,6 +188,92 @@ export const editVendorService = async (
   }
 };
 
-export const getVendorFood = async () => {};
+export const getVendorFood = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | any> => {
+  const user = req.user;
 
-export const addVendorFood = async () => {};
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const vendor = await Vendor.findById(user._id).populate("foods");
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    res.status(200).json(vendor.foods);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching vendor foods", error });
+  }
+};
+export const addVendorFood = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | any> => {
+  const user = req.user;
+
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { name, description, category, foodType, readyTime, price } =
+      req.body;
+
+    const vendor = await Vendor.findById(user._id);
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    //check if food exists under vendor by its name and price
+    const existingFood = await Food.findOne({
+      vendorId: vendor._id,
+      name,
+      price,
+    });
+
+    if (existingFood) {
+      return res.status(400).json({
+        message: "Food item already exists under this vendor",
+      });
+    }
+
+    const files = req.files as Express.Multer.File[];
+
+    console.log(files);
+
+    const images = files.map((file: Express.Multer.File) => file.filename);
+
+    const food = await Food.create({
+      vendorId: vendor._id,
+      name,
+      description,
+      category,
+      foodType,
+      readyTime,
+      price,
+      rating: 0,
+      images,
+    });
+
+    vendor.foods.push(food);
+    const updatedVendor = await vendor.save();
+
+    res.status(201).json({
+      message: "Food added successfully",
+      food,
+      vendor: updatedVendor,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error adding food", error });
+  }
+};

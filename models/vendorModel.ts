@@ -13,7 +13,7 @@ export interface IVendor extends Document {
   serviceAvailable: Boolean;
   coverImages: [string];
   rating: number;
-  //   foods: any;
+  foods: any;
 }
 
 const VendorSchema = new Schema<IVendor>(
@@ -30,7 +30,7 @@ const VendorSchema = new Schema<IVendor>(
     serviceAvailable: { type: Boolean },
     coverImages: { type: [String] },
     rating: { type: Number },
-    // foods: { type: Schema.Types.ObjectId, ref: "Food" },
+    foods: [{ type: Schema.Types.ObjectId, ref: "Food" }],
   },
   { timestamps: true }
 );

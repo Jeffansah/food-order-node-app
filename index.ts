@@ -2,6 +2,7 @@ import express from "express";
 import { AdminRouter, VendorRouter } from "./routes";
 import { connectToDatabase } from "./mongo";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 // App Initialization
 const app = express();
@@ -10,6 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use("/images", express.static(path.join(__dirname, "images")));
 
 // Routes
 app.use("/admin", AdminRouter);
